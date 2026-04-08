@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Autokauf-Checkliste</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; color: #1a1a1a; font-size: 16px; padding-bottom: 80px; }
+header { background: #1a1a1a; color: #fff; padding: 16px; position: sticky; top: 0; z-index: 100; }
+header h1 { font-size: 17px; font-weight: 600; }
+header p { font-size: 13px; color: #aaa; margin-top: 2px; }
+.tabs { display: flex; background: #fff; border-bottom: 1px solid #e0e0e0; position: sticky; top: 58px; z-index: 99; }
+.tab { flex: 1; padding: 12px 6px; text-align: center; font-size: 14px; font-weight: 500; border-bottom: 3px solid transparent; color: #888; cursor: pointer; }
+.tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+.page { display: none; padding: 12px; }
+.page.active { display: block; }
+.price-tag { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.price-tag .lbl { font-size: 13px; color: #666; }
+.price-tag .price { font-size: 26px; font-weight: 700; margin: 4px 0; }
+.verdict { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 6px; }
+.verdict.ok { background: #FEF3C7; color: #92400E; }
+.verdict.warn { background: #FEE2E2; color: #991B1B; }
+.stats { background: #fff; border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.stat-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+.stat-row:last-child { border-bottom: none; }
+.stat-label { color: #666; }
+.stat-val { font-weight: 600; }
+.green { color: #059669; } .red { color: #DC2626; } .orange { color: #D97706; }
+section { margin-bottom: 10px; }
+.section-title { font-size: 12px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: .6px; padding: 0 4px 8px; }
+.check-item { background: #fff; border-radius: 12px; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,.08); overflow: hidden; }
+.check-item label { display: flex; align-items: flex-start; padding: 13px 14px; gap: 12px; cursor: pointer; }
+.check-item input[type=checkbox] { display: none; }
+.checkmark { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #ccc; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: transparent; transition: all .15s; }
+.check-item input:checked ~ .checkmark { background: #059669; border-color: #059669; color: #fff; }
+.check-item input:checked ~ .checkmark::after { content: '\u2713'; }
+.check-item input:checked ~ .txt .main { color: #aaa; text-decoration: line-through; }
+.txt { flex: 1; min-width: 0; }
+.priority { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-bottom: 4px; letter-spacing: .3px; }
+.priority.crit { background: #FEE2E2; color: #991B1B; }
+.priority.warn { background: #FEF3C7; color: #92400E; }
+.priority.info { background: #DBEAFE; color: #1E40AF; }
+.main { font-size: 15px; font-weight: 600; line-height: 1.3; color: #1a1a1a; }
+.sub { font-size: 13px; color: #777; margin-top: 4px; line-height: 1.45; }
+.verhandlung { background: #1a1a1a; color: #fff; border-radius: 12px; padding: 16px; margin-bottom: 6px; }
+.verhandlung h3 { font-size: 12px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+.price-target { font-size: 28px; font-weight: 700; color: #4ADE80; margin-bottom: 8px; }
+.verhandlung p { font-size: 13px; line-height: 1.6; color: #ccc; }
+.verhandlung strong { color: #fff; }
+.note-area { background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.note-area textarea { width: 100%; border: none; outline: none; font-size: 14px; font-family: inherit; color: #1a1a1a; resize: none; min-height: 90px; background: transparent; line-height: 1.5; }
+.note-area textarea::placeholder { color: #bbb; }
+.progress-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e0e0e0; padding: 10px 16px 12px; z-index: 200; }
+.progress-label { font-size: 13px; color: #666; margin-bottom: 5px; display: flex; justify-content: space-between; }
+.progress-track { background: #e0e0e0; border-radius: 4px; height: 7px; }
+.progress-fill { height: 100%; background: #059669; border-radius: 4px; transition: width .25s; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>\ud83d\ude97 Autokauf-Checkliste</h1>
+  <p>C1 vs. Twingo \u00b7 Vor-Ort-Check</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('c1', this)">\ud83d\udd35 Citro\u00ebn C1<br><small style="font-size:11px;color:#aaa">1.700 \u20ac</small></div>
+  <div class="tab" onclick="switchTab('tw', this)">\ud83d\udfe2 Renault Twingo<br><small style="font-size:11px;color:#aaa">1.799 \u20ac</small></div>
+</div>
+
+<div id="page-c1" class="page active">
+  <div class="price-tag">
+    <div class="lbl">Citro\u00ebn C1 \u00b7 09/2006 \u00b7 1.0 L \u00b7 68 PS</div>
+    <div class="price">1.700 \u20ac</div>
+    <span class="verdict ok">Markt: 1.824\u20133.675 \u20ac \u00b7 Preis fair</span>
+  </div>
+  <div class="stats">
+    <div class="stat-row"><span class="stat-label">Kilometer</span><span class="stat-val orange">131.300 km</span></div>
+    <div class="stat-row"><span class="stat-label">Vorhalter</span><span class="stat-val green">2 \u2713</span></div>
+    <div class="stat-row"><span class="stat-label">HU g\u00fcltig bis</span><span class="stat-val green">03/2028 \u2713</span></div>
+    <div class="stat-row"><span class="stat-label">Unfallfrei</span><span class="stat-val green">angegeben \u2713</span></div>
+    <div class="stat-row"><span class="stat-label">Klimaanlage</span><span class="stat-val red">Nein</span></div>
+  </div>
+  <section>
+    <div class="section-title">\ud83d\udd34 Pflichtfragen an Verk\u00e4ufer</div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority crit">KRITISCH</span><div class="main">Gaspedal-R\u00fcckruf durchgef\u00fchrt?</div><div class="sub">Bj. 2005\u20132009 betroffen: Pedal kehrt nicht zur\u00fcck. Werkstattnachweis verlangen!</div></div></label></div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority warn">WICHTIG</span><div class="main">Kupplung je nachgestellt oder ersetzt?</div><div class="sub">Muss laut Wartungsplan manuell nachgestellt werden \u2013 viele Werkst\u00e4tten wissen das nicht \u2192 fr\u00fcher Verschlei\u00df.</div></div></label></div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority warn">WICHTIG</span><div class="main">Wasserpumpe je getauscht?</div><div class="sub">Bj. 2006 anf\u00e4llig. Wenn unklar \u2192 150 \u20ac Verhandlungsargument.</div></div></label></div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority info">FRAGEN</span><div class="main">Serviceheft vorhanden?</div><div class="sub">Vollst\u00e4ndiges Scheckheft = gro\u00dfes Plus. Fehlendes Heft = Preisargument.</div></div></label></div>
+  </section>
+  <section>
+    <div class="section-title">\ud83d\udd0d Vor-Ort-Check</div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority crit">KRITISCH</span><div class="main">Auspuff &amp; Unterboden auf Rost pr\u00fcfen</div><div class="sub">H\u00e4ufigste Schwachstelle! Risse/L\u00f6cher = sofort 200\u2013400 \u20ac Kosten. Unbedingt unter das Auto schauen.</div></div></label></div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority warn">WICHTIG</span><div class="main">Bremsscheiben vorne pr\u00fcfen</div><div class="sub">Tiefer Rand an Au\u00dfenkante = verschlissen (Neu: 20 mm, Minimum: 18 mm). Neue Scheiben ~100 \u20ac Teile.</div></div></label></div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority warn">WICHTIG</span><div class="main">Motor kalt starten &amp; beobachten</div><div class="sub">Rasseln = Steuerkette! Qualm hinten = Motorproblem. Motor laufen lassen bis Betriebstemp.</div></div></label></div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority info">CHECK</span><div class="main">Probefahrt: Lenkung, Schaltung, Bremsen</div><div class="sub">Zieht er nach rechts/links? Schaltung pr\u00e4zise? Bremspedal fest?</div></div></label></div>
+  </section>
+  <section>
+    <div class="section-title">\ud83d\udcac Verhandlung</div>
+    <div class="verhandlung">
+      <h3>Zielpreis C1</h3>
+      <div class="price-target">1.400 \u20ac</div>
+      <p><strong>Einstieg:</strong> 1.200 \u20ac anbieten<br><br><strong>Argumente:</strong><br>\u00b7 Kein Klimaanlage (\u2192 \u2212200 \u20ac)<br>\u00b7 131 Tkm (\u2192 \u2212100 \u20ac)<br>\u00b7 Wasserpumpe unklar (\u2192 \u2212150 \u20ac)<br>\u00b7 Kupplung-Status unklar (\u2192 \u2212100 \u20ac)</p>
+    </div>
+  </section>
+  <section>
+    <div class="section-title">\ud83d\udcdd Notizen</div>
+    <div class="note-area"><textarea placeholder="Eindr\u00fccke, Auff\u00e4lligkeiten, Aussagen des Verk\u00e4ufers..."></textarea></div>
+  </section>
+</div>
+
+<div id="page-tw" class="page">
+  <div class="price-tag">
+    <div class="lbl">Renault Twingo II \u00b7 11/2010 \u00b7 1.2 L \u00b7 75 PS</div>
+    <div class="price">1.799 \u20ac</div>
+    <span class="verdict warn">Unfallfrei NICHT angegeben \u26a0</span>
+  </div>
+  <div class="stats">
+    <div class="stat-row"><span class="stat-label">Kilometer</span><span class="stat-val orange">140.000 km</span></div>
+    <div class="stat-row"><span class="stat-label">Vorhalter</span><span class="stat-val orange">3</span></div>
+    <div class="stat-row"><span class="stat-label">HU g\u00fcltig bis</span><span class="stat-val green">11/2025 \u2713</span></div>
+    <div class="stat-row"><span class="stat-label">Unfallfrei</span><span class="stat-val red">Nicht angegeben \u26a0</span></div>
+    <div class="stat-row"><span class="stat-label">Klimaanlage</span><span class="stat-val green">Ja \u2713</span></div>
+  </div>
+  <section>
+    <div class="section-title">\ud83d\udd34 Dealbreaker \u2013 ZUERST kl\u00e4ren!</div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority crit">DEALBREAKER</span><div class="main">R\u00fcckruf Ventilkeile (Motor D4F) erledigt?</div><div class="sub">Dieses Auto (11/2010) liegt genau im R\u00fcckrufzeitraum! Fehlerhafte Ventilkeile \u2192 Motorschaden m\u00f6glich. Werkstattnachweis verlangen. Ohne Nachweis: NICHT KAUFEN.</div></div></label></div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority crit">KRITISCH</span><div class="main">Zahnriemen \u2013 wann zuletzt gewechselt?</div><div class="sub">Alle 5 Jahre / 80.000 km f\u00e4llig. Bei 140 Tkm muss er min. 1\u00d7 getauscht worden sein. Kein Nachweis \u2192 350\u2013450 \u20ac sofort einplanen.</div></div></label></div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority crit">KRITISCH</span><div class="main">War das Fahrzeug je in einen Unfall?</div><div class="sub">Unfallfreiheit NICHT angegeben! Direkt fragen + Karosserie auf Spaltma\u00dfe und Farbunterschiede pr\u00fcfen.</div></div></label></div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority warn">WICHTIG</span><div class="main">Serviceheft vorhanden?</div><div class="sub">Zahnriemen- und \u00d6lwechsel-Intervalle besonders relevant.</div></div></label></div>
+  </section>
+  <section>
+    <div class="section-title">\ud83d\udd0d Vor-Ort-Check</div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority crit">KRITISCH</span><div class="main">Achsaufh\u00e4ngung &amp; Lenkgelenke pr\u00fcfen</div><div class="sub">Twingo II f\u00e4llt T\u00dcV \u00fcberdurchschnittlich wegen Spurstangenkopfen durch. Lenkrad einschlagen: spielt es?</div></div></label></div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority warn">WICHTIG</span><div class="main">Karosserie auf Unfallspuren</div><div class="sub">Alle T\u00fcrspalte gleichm\u00e4\u00dfig? Farbunterschiede zwischen Teilen?</div></div></label></div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority warn">WICHTIG</span><div class="main">Bremsen auf Probefahrt testen</div><div class="sub">Twingo II hat ab Werk schwache Bremsen. Vollbremsung einplanen.</div></div></label></div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority warn">WICHTIG</span><div class="main">Motor kalt starten \u2013 Ger\u00e4usche?</div><div class="sub">Klopfen, Ruckeln? Unter dem Auto auf \u00d6lflecken achten.</div></div></label></div>
+    <div class="check-item"><label><input type="checkbox" onchange="updateProgress()"><div class="checkmark"></div><div class="txt"><span class="priority info">CHECK</span><div class="main">Servolenkung \u2013 leichtg\u00e4ngig?</div><div class="sub">Einige 2010er: Servo schwerg\u00e4ngig oder ausgefallen. Bei laufendem Motor testen.</div></div></label></div>
+  </section>
+  <section>
+    <div class="section-title">\ud83d\udcac Verhandlung</div>
+    <div class="verhandlung">
+      <h3>Zielpreis Twingo</h3>
+      <div class="price-target">1.400 \u20ac</div>
+      <p><strong>Einstieg:</strong> 1.200 \u20ac anbieten<br><br><strong>Argumente:</strong><br>\u00b7 3 Vorhalter (\u2192 \u2212100 \u20ac)<br>\u00b7 Kein Unfallfreihinweis (\u2192 \u2212100 \u20ac)<br>\u00b7 Zahnriemen-Nachweis fehlt (\u2192 \u2212350\u2013450 \u20ac)<br>\u00b7 R\u00fcckruf-Status unklar (\u2192 Dealbreaker)<br><br><strong>\u26a0 Ohne R\u00fcckruf-Nachweis: Angebot ablehnen!</strong></p>
+    </div>
+  </section>
+  <section>
+    <div class="section-title">\ud83d\udcdd Notizen</div>
+    <div class="note-area"><textarea placeholder="Eindr\u00fccke, Auff\u00e4lligkeiten, Aussagen des Verk\u00e4ufers..."></textarea></div>
+  </section>
+</div>
+
+<div class="progress-bar">
+  <div class="progress-label">
+    <span id="progress-text">Checks erledigt</span>
+    <span id="progress-count">0 / 0</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+</div>
+
+<script>
+function switchTab(id, el) {
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById('page-' + id).classList.add('active');
+  updateProgress();
+}
+function updateProgress() {
+  var p = document.querySelector('.page.active');
+  var all = p.querySelectorAll('input[type=checkbox]');
+  var done = p.querySelectorAll('input[type=checkbox]:checked');
+  var pct = all.length ? Math.round(done.length / all.length * 100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-count').textContent = done.length + ' / ' + all.length;
+  document.getElementById('progress-text').textContent = pct === 100 ? '\u2705 Alles gecheckt!' : 'Checks erledigt';
+}
+updateProgress();
+</script>
+</body>
+</html>
